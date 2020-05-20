@@ -1,0 +1,29 @@
+{
+	"name" : "lpetrora/equilibrium-rest",
+	"description" : "The Equilibrim framework for ReST apis",
+	"type" : "library",
+	"license: "MIT",
+	"authors" : [{
+			"name" : "Leonardo Petrora"
+		}
+	],
+	"require" : {
+		"monolog/monolog" : "~2.0",
+		"smarty/smarty" : "~3.1",
+		"propel/propel" : "dev-master"
+	},
+	"autoload" : {
+		"classmap" : ["src/Equilibrium.php"],
+		"psr-4" : {
+			"equilibrium\\" : "src/",
+			"app\\" : "../../../"
+		}
+	},
+	"bin": [
+		"src/bin/equilibrium",
+		"src/bin/equilibrium.bat"
+	],
+	"keywords" : [
+		"framework"
+	]
+}
