@@ -5,7 +5,10 @@
 	use Equilibrium;
 	use equilibrium\AuthManager;
 	use equilibrium\RouteManager;
-	
+use equilibrium\exceptions\NotFoundException;
+use equilibrium\responses\HttpResponse;
+use equilibrium\exceptions\EquilibriumException;
+            	
 	class Bootstrap {
 		
 		static public $appPath = null;
@@ -14,6 +17,8 @@
 		
 		protected $_http = '/';
 		protected $_basePath = '';
+		
+		protected $endpointNamespace = 'app\endpoints';
 		
 		public function __construct()
 		{
@@ -32,6 +37,9 @@
 		{
 		    \Equilibrium::$appPath = static::$appPath;
 		    \Equilibrium::$equilibriumPath = static::$equilibriumPath;
+		    
+		    if (\Equilibrium::config()->disable_sessions??true)
+		        session_write_close();
 		    
 			$httpDir = \Equilibrium::config()->application->prefix??'/';
 			$this->_http = $httpDir; //TODO:Empieza y termina con /
@@ -53,82 +61,92 @@
 			require_once 'InitializeDatabaseConfig.php';
 		}
 		
-		protected function fileControllerExists($class)
+		protected function fileEndpointExists($class)
 		{
-			$path = $this->_basePath ."/controllers/$class.php";
-			return $this->fileExists($path);
-		}
-		
-		protected function fileExists($filename)
-		{
-			return is_file($filename) && is_readable($filename);
+		    $path = $this->_basePath ."/endpoints/$class.php";
+		    return $this->fileExists($path);
 		}
 
-		protected function returnNotFoundPage()
+		protected function fileExists($filename)
 		{
-			header("HTTP/1.0 404 Not Found");
-			die('Not found');
+		    return is_file($filename) && is_readable($filename);
 		}
 		
 		public function run()
 		{
 			$this->setup();
-			$parsed = RouteManager::makeRoute($this->_http);
+		    	
+			$executionResult = null;
 			
-			if (! $this->fileControllerExists($parsed['class'])) $this->returnNotFoundPage();
-			require_once $this->_basePath . '/controllers/'.$parsed['class'].'.php';
-			
-			$className = $parsed['namespace'].$parsed['class'];
-			$object = new $className();
-			Equilibrium::$currentController = $object;
-			
-			if (! is_callable([$object, $parsed['action']]) && $parsed['canFallBack'])
-			{
-				$parsed['action'] = 'actionIndex';
-				$parsed['params'] = $parsed['fallbackParams'];
-			}
+		    try {
+    			//CORS headers
+    			$config = \Equilibrium::config()->toArray();
+                $cors = $config['application']?($config['application']['cors']??[]):[];
+    			foreach ($cors as $header => $value) {
+    			    $value = is_array($value)?implode(', ', $value): $value;
+    			    header("$header: $value");
+    			}
+    			unset ($cors);
+    			
+    			RouteManager::loadRoutes($this->_http);
+    			$uri = explode('?',$_SERVER['REQUEST_URI']);
+    			$uri = $uri[0];
+    			
+    			$route = RouteManager::match($uri);
+                if (empty($route)) throw new NotFoundException();
+    			
+                //Si el método fue OPTIONS, y la ruta existe y estoy autorizado, devolvemos que todo esá bien
+                if (strtolower($_SERVER['REQUEST_METHOD']) == 'options')
+                    throw new EquilibriumException('Está todo bien', 200);                
+                
+                //Authorization
+                if (! AuthManager::isAuthorized($route) )
+                    throw new EquilibriumException('Unauthorized' , 401);
 
-			//Check authorization
-			$user = Equilibrium::user();
-			$isAuth = AuthManager::isAllowed($parsed['class'], $parsed['action'], $user);
-			if (! $isAuth)
-			{
-				if (\Equilibrium::config()->application->debug) \Equilibrium::log()->debug('Autorización denegada: ', $parsed );
-				
-				$redirector = explode('::',AuthManager::$lastCallback);
-				$className = $redirector[0];
-				$parsed['class'] = explode('\\',$redirector[0]);
-				$parsed['class'] = end($parsed['class']);
-				$parsed['action'] = $redirector[1];
-				try {
-					$action = lcfirst(substr($parsed['action'],6));
-					$reflectionClass = new \ReflectionClass($className);
-					$method = $reflectionClass->getMethod('redirectAndCall');
-					$method->invoke(null, $action);
-					
-				} catch (\Exception $e) {
-					if (! $this->fileControllerExists($parsed['class'])) $this->returnNotFoundPage();
-				}
-			}
-			
-			//Acá hay que cambiar un poco las cosas, las acciones tienen que devolver un objeto response
-			
-			try {
-				//Llamado a la clase
-				$object->processPageParameters();
-				call_user_func_array([$object, $parsed['action']], $parsed['params']);
-				die();
-				
-			} catch (\Exception $e) {
-				//TODO: Si estoy en modo debug, mostrar el error, sino tirar la pantalla azul de la muerte.
-				\Equilibrium::log()->critical($e);
-				if (\Equilibrium::config()->application->debug) 
-				{
-					var_dump ($e);
-				} else {
-					http_response_code(500);
-					die ('Unhandled but logged error');
-				}
-			}
+                //Incluir el controlador y llamar al método
+                list($endpoint, $method) = explode('::', $route['handler']);
+                
+                if (! $this->fileEndpointExists($endpoint)) 
+                    throw new \Exception("No existe el endpoint $endpoint");
+                
+                $handler = $this->endpointNamespace . '\\' . $endpoint;
+                $handler = new $handler();
+                
+                if (! is_callable([$handler,$method])) 
+                    throw new \Exception("No existe el método $method del endpoint $endpoint");
+                
+                $executionResult = $handler->{$method}($route['args']??[]);
+                
+                if (empty($executionResult))
+                    throw new \Exception("$endpoint::$method debe devolver un objeto IResponse");
+                
+		    } catch (NotFoundException $e) {
+    			$executionResult = new HttpResponse();
+		        $executionResult->setCode(404)->setBody('Not found');
+		        
+		    } catch (EquilibriumException $e) {
+		        $executionResult = new HttpResponse();
+		        $executionResult->setCode($e->getCode())->setBody('error');
+		        
+		    } catch (\Exception $e) {
+		        \Equilibrium::log()->critical($e);
+		        $executionResult = new HttpResponse();
+		        $executionResult->setCode(500)->setBody('Internal server error');
+		    }
+		    
+		    try {
+		        $executionResult->execute();
+		        
+		    } catch (\Exception $e) {
+                \Equilibrium::log()->critical($e);
+                if (Equilibrium::config()->application->debug) {
+                    var_dump($e);
+                } else {
+                    echo 'Ocurrió un error grave en el servidor. Por favor reintente más tarde';
+                }
+                http_response_code(500);
+		    }
+
+		    die ();
 		}
 	}

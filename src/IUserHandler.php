@@ -3,6 +3,9 @@
 	
 	interface IUserHandler
 	{
+	    const GUEST = 0;
+	    const AUTHENTICATED = 1;
+	    
 		/**
 		 * Returns true if the current user is guest
 		 * @return boolean

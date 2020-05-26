@@ -49,7 +49,7 @@ class Equilibrium
 	 */
 	static public function post()
 	{
-		if(static::$_post == null) static::$_post = new Request($_POST, static::$currentController->checkCSRF, '-');
+		if(static::$_post == null) static::$_post = new Request($_POST, false, '-');
 		return static::$_post;
 	}
 	

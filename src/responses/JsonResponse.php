@@ -1,13 +1,13 @@
 <?php 
 namespace equilibrium\responses;
 
-class HttpResponse extends AbstratHttpResponse {
+class JsonResponse extends AbstractHttpResponse {
     protected $payload = '';
     
     /**
      * Set json payload
      * @param mixed $v
-     * @return \equilibrium\responses\HttpResponse
+     * @return \equilibrium\responses\JsonResponse
      */
     public function setPayload($v) {
         $this->payload = $v;
@@ -26,6 +26,6 @@ class HttpResponse extends AbstratHttpResponse {
     {
         parent::execute();
         header('Content-type: application/json');
-        echo json_encode($this->body);
+        echo json_encode($this->payload);
     }
 }
