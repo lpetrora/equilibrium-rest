@@ -18,6 +18,7 @@ class Equilibrium
 	private static $_user = null;
 	private static $_files = null;
 	private static $_log = null;
+	private static $_body = null;
 	
 	//Ruta a la aplicación
 	public static $appPath = '';
@@ -29,6 +30,8 @@ class Equilibrium
 	
 	//Controlador al que se ha llamado
 	public static $currentController = null;
+	
+	public static $currentControllerName = null;
 	
 	//Sesion con cosas de Equilibrium
 	private static $_eq_session;
@@ -262,5 +265,28 @@ class Equilibrium
 	        $ip = $_SERVER['REMOTE_ADDR'];
 	    }
 	    return $ip;
+	}
+	
+	/**
+	 * Returns body parsed as Request
+	 * @return Request
+	 */
+	static public function parseBody() {
+	    if (static::$_body == null)
+	    {
+	        $result = static::parseRawBody();   
+            static::$_body = new Request($result, false, '-');
+	    }
+	    return static::$_body;
+	}
+	
+	static public function parseRawBody() {
+        $result = [];
+	    $content = file_get_contents("php://input");
+	    $result = json_decode($content, true);
+	    if (json_last_error() != JSON_ERROR_NONE) {
+	       parse_str($content, $result);
+        }
+	    return $result; 
 	}
 }

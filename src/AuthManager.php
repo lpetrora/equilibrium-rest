@@ -17,7 +17,9 @@
 	           //Cumple un rol específico
 	           || self::someone_in_array($user->getRoles(), $allowedRoles);
 	        
-	        return $isAuthorized && $route['allow'];
+	        \Equilibrium::log()->debug('AUTH: ', ['Route' => $route, 'Token' => $user->getToken(), 'User' => $user->getUserData()]);
+	           
+	        return $isAuthorized && ($route['allow']??false);
 	    }
 		
 		protected static function someone_in_array($needles, $haystack)

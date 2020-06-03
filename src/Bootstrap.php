@@ -114,6 +114,10 @@ use equilibrium\exceptions\EquilibriumException;
                 
                 if (! is_callable([$handler,$method])) 
                     throw new \Exception("No existe el método $method del endpoint $endpoint");
+
+                \Equilibrium::$currentController = $handler;
+                \Equilibrium::$currentControllerName = explode('\\', get_class($handler));
+                \Equilibrium::$currentControllerName = end(\Equilibrium::$currentControllerName);
                 
                 $executionResult = $handler->{$method}($route['args']??[]);
                 
