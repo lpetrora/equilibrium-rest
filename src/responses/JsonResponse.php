@@ -11,6 +11,7 @@ class JsonResponse extends AbstractHttpResponse {
      */
     public function setPayload($v) {
         $this->payload = $v;
+        $this->setCode( empty($v)?204:200);
         return $this;
     }
     

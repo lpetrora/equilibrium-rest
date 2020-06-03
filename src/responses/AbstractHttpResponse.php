@@ -2,7 +2,7 @@
 namespace equilibrium\responses;
 
 abstract class AbstractHttpResponse extends AbstractResponse {
-    protected $code = 200;
+    protected $code = 204;
     
     /**
      * set http code
