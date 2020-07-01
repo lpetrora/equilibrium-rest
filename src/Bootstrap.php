@@ -35,30 +35,28 @@ use equilibrium\exceptions\EquilibriumException;
 		
 		protected function setup()
 		{
-		    \Equilibrium::$appPath = static::$appPath;
-		    \Equilibrium::$equilibriumPath = static::$equilibriumPath;
+            \Equilibrium::$appPath = static::$appPath;
+            \Equilibrium::$equilibriumPath = static::$equilibriumPath;
 		    
-		    if (\Equilibrium::config()->disable_sessions??true)
-		        session_write_close();
+            if (\Equilibrium::config()->application->disable_sessions??true) session_write_close();
 		    
-			$httpDir = \Equilibrium::config()->application->prefix??'/';
-			$this->_http = $httpDir; //TODO:Empieza y termina con /
-			\Equilibrium::$prefix = $httpDir;
+            $httpDir = \Equilibrium::config()->application->prefix??'/';
+            $this->_http = $httpDir; //TODO:Empieza y termina con /
+            \Equilibrium::$prefix = $httpDir;
 			
-			$charset = Equilibrium::config()->application->charset;
-			header('Content-Type:text/html; charset='.$charset);
-			ini_set('default_charset',$charset);
-			date_default_timezone_set(Equilibrium::config()->application->timezone);
+            $charset = Equilibrium::config()->application->charset;
+            header('Content-Type:text/html; charset='.$charset);
+            ini_set('default_charset',$charset);
+            date_default_timezone_set(Equilibrium::config()->application->timezone);
 			
-			if (Equilibrium::config()->application->debug)
-			{
-				ini_set('display_errors','1');
-				error_reporting(E_ALL);
-			} else {
-				ini_set('display_errors','0');
-			}
+            if (Equilibrium::config()->application->debug) {
+                ini_set('display_errors','1');
+                error_reporting(E_ALL);
+            } else {
+                ini_set('display_errors','0');
+            }
 			
-			require_once 'InitializeDatabaseConfig.php';
+            require_once 'InitializeDatabaseConfig.php';
 		}
 		
 		protected function fileEndpointExists($class)
