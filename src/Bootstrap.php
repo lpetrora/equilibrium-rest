@@ -72,25 +72,25 @@ use equilibrium\exceptions\EquilibriumException;
 		
 		public function run()
 		{
-			$this->setup();
-		    	
-			$executionResult = null;
+            $this->setup();
+            
+            $executionResult = null;
 			
-		    try {
-    			//CORS headers
-    			$config = \Equilibrium::config()->toArray();
+            try {
+                //CORS headers
+                $config = \Equilibrium::config()->toArray();
                 $cors = $config['application']?($config['application']['cors']??[]):[];
-    			foreach ($cors as $header => $value) {
-    			    $value = is_array($value)?implode(', ', $value): $value;
-    			    header("$header: $value");
-    			}
-    			unset ($cors);
+                foreach ($cors as $header => $value) {
+                    $value = is_array($value)?implode(', ', $value): $value;
+                    header("$header: $value");
+                }
+                unset ($cors);
+                
+                RouteManager::loadRoutes($this->_http);
+                $uri = explode('?',$_SERVER['REQUEST_URI']);
+                $uri = $uri[0];
     			
-    			RouteManager::loadRoutes($this->_http);
-    			$uri = explode('?',$_SERVER['REQUEST_URI']);
-    			$uri = $uri[0];
-    			
-    			$route = RouteManager::match($uri);
+                $route = RouteManager::match($uri);
                 if (empty($route)) throw new NotFoundException();
     			
                 //Si el método fue OPTIONS, y la ruta existe y estoy autorizado, devolvemos que todo esá bien
@@ -122,24 +122,24 @@ use equilibrium\exceptions\EquilibriumException;
                 if (empty($executionResult))
                     throw new \Exception("$endpoint::$method debe devolver un objeto IResponse");
                 
-		    } catch (NotFoundException $e) {
-    			$executionResult = new HttpResponse();
-		        $executionResult->setCode(404)->setBody('Not found');
+            } catch (NotFoundException $e) {
+                $executionResult = new HttpResponse();
+                $executionResult->setCode(404)->setBody('Not found');
 		        
-		    } catch (EquilibriumException $e) {
-		        $executionResult = new HttpResponse();
-		        $executionResult->setCode($e->getCode())->setBody('error');
+            } catch (EquilibriumException $e) {
+                $executionResult = new HttpResponse();
+                $executionResult->setCode($e->getCode())->setBody('error');
 		        
-		    } catch (\Exception $e) {
-		        \Equilibrium::log()->critical($e);
-		        $executionResult = new HttpResponse();
-		        $executionResult->setCode(500)->setBody('Internal server error');
-		    }
+            } catch (\Exception $e) {
+                \Equilibrium::log()->critical($e);
+                $executionResult = new HttpResponse();
+                $executionResult->setCode(500)->setBody('Internal server error');
+            }
 		    
-		    try {
-		        $executionResult->execute();
+            try {
+                $executionResult->execute();
 		        
-		    } catch (\Exception $e) {
+            } catch (\Exception $e) {
                 \Equilibrium::log()->critical($e);
                 if (Equilibrium::config()->application->debug) {
                     var_dump($e);
@@ -147,8 +147,8 @@ use equilibrium\exceptions\EquilibriumException;
                     echo 'Ocurrió un error grave en el servidor. Por favor reintente más tarde';
                 }
                 http_response_code(500);
-		    }
+            }
 
-		    die ();
+            die ();
 		}
 	}
