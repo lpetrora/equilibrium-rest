@@ -5,9 +5,9 @@
 	use Equilibrium;
 	use equilibrium\AuthManager;
 	use equilibrium\RouteManager;
-use equilibrium\exceptions\NotFoundException;
-use equilibrium\responses\HttpResponse;
-use equilibrium\exceptions\EquilibriumException;
+    use equilibrium\exceptions\NotFoundException;
+    use equilibrium\responses\HttpResponse;
+    use equilibrium\exceptions\EquilibriumException;
             	
 	class Bootstrap {
 		
@@ -124,16 +124,16 @@ use equilibrium\exceptions\EquilibriumException;
                 
             } catch (NotFoundException $e) {
                 $executionResult = new HttpResponse();
-                $executionResult->setCode(404)->setBody('Not found');
+                $executionResult->setBody('Not found')->setCode(404);
 		        
             } catch (EquilibriumException $e) {
                 $executionResult = new HttpResponse();
-                $executionResult->setCode($e->getCode())->setBody('error');
+                $executionResult->setBody('error')->setCode($e->getCode());
 		        
             } catch (\Exception $e) {
                 \Equilibrium::log()->critical($e);
                 $executionResult = new HttpResponse();
-                $executionResult->setCode(500)->setBody('Internal server error');
+                $executionResult->setBody('Internal server error')->setCode(500);
             }
 		    
             try {

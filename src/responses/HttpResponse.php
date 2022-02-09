@@ -11,7 +11,7 @@ class HttpResponse extends AbstractHttpResponse {
      */
     public function setBody($v) {
         $this->body = $v;
-        $this->setCode( empty($v)?204:200);
+        if ($this->getCode() === null) $this->setCode( empty($v)?204:200);
         return $this;
     }
     
@@ -28,5 +28,4 @@ class HttpResponse extends AbstractHttpResponse {
         parent::execute();
         echo $this->body;
     }
-
 }

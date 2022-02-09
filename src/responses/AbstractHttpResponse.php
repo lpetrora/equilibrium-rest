@@ -1,8 +1,10 @@
 <?php 
 namespace equilibrium\responses;
 
+use equilibrium\HttpError;
+
 abstract class AbstractHttpResponse extends AbstractResponse {
-    protected $code = 204;
+    protected $code = null;
     
     /**
      * set http code
@@ -24,6 +26,7 @@ abstract class AbstractHttpResponse extends AbstractResponse {
         
     public function execute()
     {
+        if ($this->code === null) $this->code = HttpError::HTTP_NO_CONTENT;
         http_response_code($this->code);
     }
 
