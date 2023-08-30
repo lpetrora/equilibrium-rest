@@ -9,7 +9,7 @@
 	"require" : {
 		"monolog/monolog" : "^3",
 		"smarty/smarty" : "^4",
-		"propel/propel" : "dev-master",
+		"propel/propel" : "dev-master"
 	},
 	"minimum-stability": "dev",
 	"prefer-stable" : true,
