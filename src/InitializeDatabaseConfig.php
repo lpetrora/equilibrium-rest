@@ -3,7 +3,7 @@
 	use Equilibrium;
 
 	$databasemapfile = Equilibrium::$appPath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'database_map.php';
-        if (file_exists($databasemapfile)) require_once $databasemapfile;
+    if (file_exists($databasemapfile)) require_once $databasemapfile;
 
 	if (Equilibrium::config()->database !== null)
 	{
@@ -14,7 +14,7 @@
 			$serviceContainer = \Propel\Runtime\Propel::getServiceContainer();
 			//$serviceContainer->checkVersion('2.0.0-dev');
 			$serviceContainer->setAdapterClass($name, $ds->adapter);
-			$manager = new \Propel\Runtime\Connection\ConnectionManagerSingle();
+			$manager = new \Propel\Runtime\Connection\ConnectionManagerSingle($name);
 			$config = [
 					'classname' => 'Propel\\Runtime\\Connection\\ConnectionWrapper',
 					'dsn' => $ds->adapter.':host='.$ds->server.';port='.$ds->port.';dbname='.$ds->database,
@@ -38,7 +38,7 @@
 		
 			$manager->setConfiguration($config);
 			$manager->setName($name);
-			$serviceContainer->setConnectionManager($name, $manager);
+			$serviceContainer->setConnectionManager($manager);
 		}
 		$serviceContainer->setDefaultDatasource($defaultDatasource);
 	}
